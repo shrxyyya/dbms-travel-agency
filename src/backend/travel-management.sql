@@ -76,3 +76,29 @@ CREATE TABLE Payment (
 );
 
 SELECT * FROM Customer;
+
+-- Insert 3 vehicles (mini, sedan, and SUV)
+INSERT INTO Vehicle (VehicleType, LicensePlate, Capacity, Model, MakeYear, InsuranceNumber, AvailabilityStatus)
+VALUES 
+('Mini', 'ABC1234', 4, 'Toyota Prius', 2020, 'INS12345MINI', 'Available'),
+('Sedan', 'XYZ5678', 5, 'Honda Accord', 2019, 'INS67890SEDAN', 'Available'),
+('SUV', 'LMN9101', 7, 'Ford Explorer', 2021, 'INS11223SUV', 'Available');
+
+SELECT * FROM Vehicle;
+
+-- Insert 3 drivers, each assigned to one of the vehicles inserted above
+INSERT INTO Driver (FirstName, LastName, Phone, LicenseNumber, ExperienceYears, AssignedVehicleID, AvailabilityStatus)
+VALUES 
+('John', 'Doe', '555-1234', 'DRV1234', 5, 1, TRUE), -- Assigned to Mini (VehicleID = 1)
+('Jane', 'Smith', '555-5678', 'DRV5678', 3, 2, TRUE), -- Assigned to Sedan (VehicleID = 2)
+('Bob', 'Johnson', '555-9101', 'DRV9101', 7, 3, TRUE); -- Assigned to SUV (VehicleID = 3)
+
+SELECT * FROM Driver;
+
+SELECT v.VehicleID, v.Model, v.LicensePlate, d.FirstName AS driverFirstName, d.LastName AS driverLastName, v.Capacity
+FROM Vehicle v
+JOIN Driver d ON v.VehicleID = d.AssignedVehicleID
+WHERE v.AvailabilityStatus = 'Available' 
+AND v.VehicleType = 'Sedan';  -- Replace 'Sedan' with an actual value to test
+
+UPDATE Vehicle SET AvailabilityStatus = 'Unavailable' WHERE VehicleID = 2;
