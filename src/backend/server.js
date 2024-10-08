@@ -146,35 +146,46 @@ app.post('/api/update-car-availability', (req, res) => {
     });
 });
 
+app.get('/api/customer-id', async (req, res) => {
+    const customerEmail = req.query.customerEmail;
+    if (!customerEmail) {
+        return res.status(400).json({ error: 'Customer email is required' });
+    }
+    try {
+        const customer = await db.query('SELECT CustomerID FROM Customer WHERE Email = ?', [customerEmail]);
+        if (customer.length === 0) {
+            return res.status(404).json({ error: 'Customer not found' });
+        }
+        res.json({ customerID: customer[0].CustomerID });
+    } catch (error) {
+        res.status(500).json({ error: 'Error fetching customer ID' });
+    }
+});
+
 // Updated: Get customer details by customerID passed as a route parameter
 app.get('/api/customer-details/:customerID', async (req, res) => {
-    const customerID = req.params.customerID; // Get the customer ID from the route parameters
-
+    const customerID = req.params.customerID;
     try {
-        const query = 'SELECT * FROM Customer WHERE CustomerID = ?';
-        const [results] = await db.query(query, [customerID]);
-        res.json(results[0]);
+        const customer = await db.query('SELECT * FROM Customer WHERE CustomerID = ?', [customerID]);
+        res.json(customer[0]); // Return the first result
     } catch (error) {
-        console.error('Error fetching customer details:', error);
-        res.status(500).send('Server error');
+        res.status(500).json({ error: 'Error fetching customer details' });
     }
 });
 
 app.post('/api/confirm-booking', async (req, res) => {
     const { tripDate, bookingDate, startLocation, endLocation, selectedCar, customer, price } = req.body;
 
-    // Check if price is provided
     if (!price) {
         return res.status(400).json({ success: false, message: 'Price is required' });
     }
 
     try {
-        // Insert the booking details into the database
+        // Insert the booking into the database
         const query = `
             INSERT INTO Booking (CustomerID, VehicleID, DriverID, TripDate, BookingDate, StartLocation, EndLocation, TotalCost, PaymentStatus)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'Pending')
         `;
-
         const bookingResult = await db.query(query, [
             customer.CustomerID, 
             selectedCar.VehicleID, 
@@ -186,21 +197,26 @@ app.post('/api/confirm-booking', async (req, res) => {
             price
         ]);
 
-        // Fetch vehicle and driver details
-        const vehicleQuery = `
-            SELECT v.Model, v.LicensePlate, d.FirstName AS driverFirstName, d.LastName AS driverLastName
-            FROM Vehicle v
-            JOIN Driver d ON v.VehicleID = d.AssignedVehicleID
-            WHERE v.VehicleID = ?
+        // Fetch the newly created booking details
+        const bookingDetailsQuery = `
+            SELECT 
+                b.BookingID, b.TripDate, b.BookingDate, b.StartLocation, b.EndLocation, b.TotalCost, b.PaymentStatus,
+                v.VehicleType, v.LicensePlate, v.Model, 
+                d.FirstName AS DriverFirstName, d.LastName AS DriverLastName, d.Phone AS DriverPhone,
+                c.FirstName AS CustomerFirstName, c.LastName AS CustomerLastName, c.Email AS CustomerEmail, c.Phone AS CustomerPhone
+            FROM Booking b
+            JOIN Vehicle v ON b.VehicleID = v.VehicleID
+            JOIN Driver d ON b.DriverID = d.DriverID
+            JOIN Customer c ON b.CustomerID = c.CustomerID
+            WHERE b.BookingID = ?
         `;
-
-        const vehicleDetails = await db.query(vehicleQuery, [selectedCar.VehicleID]);
+        const [bookingDetails] = await db.query(bookingDetailsQuery, [bookingResult.insertId]);
 
         res.status(200).json({
             success: true,
             message: 'Booking confirmed',
             bookingID: bookingResult.insertId,
-            vehicleDetails: vehicleDetails[0]
+            vehicleDetails: bookingDetails
         });
     } catch (error) {
         console.error('Error confirming booking:', error);
