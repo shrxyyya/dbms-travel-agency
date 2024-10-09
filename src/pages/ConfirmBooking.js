@@ -4,24 +4,21 @@ import axios from 'axios';
 
 const ConfirmBooking = () => {
     const location = useLocation();
-    const { bookingData, selectedCar, customerID } = location.state || {};
+    const { bookingData, selectedCar, customerID } = location.state || {};  // Safely destructuring location.state
     const [customer, setCustomer] = useState(null);
     const navigate = useNavigate();
 
-    console.log('Current customer state:', customer);
-
-
-    // Log the customerID to verify it's being passed correctly
     useEffect(() => {
-        console.log('Received customerID:', customerID);  // Log the customerID
+        // Log customerID for debugging
+        console.log('Received customerID:', customerID);  
+
+        // Fetch customer details when component mounts
         const fetchCustomerDetails = async () => {
             if (customerID) {
                 try {
                     const response = await axios.get(`http://localhost:5000/api/customer-details/${customerID}`);
-                    console.log('print:', response.data);
                     if (response.data) {
-                        console.log('Customer data received:', response.data); // Log the response data
-                        setCustomer(response.data);  // Set customer data fetched from the API
+                        setCustomer(response.data);  // Set fetched customer data
                     } else {
                         console.error('No customer data received');
                     }
@@ -33,11 +30,12 @@ const ConfirmBooking = () => {
             }
         };
     
-        fetchCustomerDetails();  // Call the function when the component loads
+        fetchCustomerDetails();
     }, [customerID]);      
 
-    if (!bookingData || !selectedCar || !customerID) {
-        return <div>Error: Booking data, Car data, or Customer ID is missing.</div>;
+    // Early return if any required data is missing
+    if (!bookingData || !selectedCar || !customerID || !customer) {
+        return <div>Error: Booking data, Car data, or Customer information is missing.</div>;
     }
 
     const handleConfirmBooking = async () => {
@@ -45,26 +43,39 @@ const ConfirmBooking = () => {
             console.error('Customer data is not loaded yet');
             return;
         }
-
+    
         const bookingPayload = {
             ...bookingData,
-            selectedCar,
+            selectedCar: {
+                VehicleID: selectedCar.VehicleID,
+                DriverID: selectedCar.DriverID,
+                Model: selectedCar.Model,
+                LicensePlate: selectedCar.LicensePlate
+            },
             customer,
-            price: bookingData.price  // Ensure price is included in the payload
+            price: bookingData.price  // This ensures the price is included in the payload
         };
-
+    
         try {
             const response = await axios.post('http://localhost:5000/api/confirm-booking', bookingPayload);
             if (response.data.success) {
-                // Redirect to payment page if booking is successful
-                navigate('/payment', { state: { bookingDetails: response.data.vehicleDetails } });
+                // Navigate to Payment page and pass all required details
+                const bookingDetails = {
+                    ...response.data.vehicleDetails,  // vehicle and driver details
+                    customer,  // Include customer details
+                    selectedCar,
+                    price: bookingData.price,  // Include the correct total price here
+                    BookingDate: bookingData.bookingDate,
+                    TripDate: bookingData.tripDate
+                };
+                navigate('/payment', { state: { bookingDetails } });
             } else {
                 console.error('Booking confirmation failed:', response.data.message);
             }
         } catch (error) {
             console.error('Error confirming booking:', error);
         }
-    };
+    };        
 
     return (
         <div className="confirm-booking-container">

@@ -189,36 +189,60 @@ app.post('/api/confirm-booking', async (req, res) => {
     }
 
     try {
-        // Insert the booking into the database
-        const query = `
-            INSERT INTO Booking (CustomerID, VehicleID, DriverID, TripDate, BookingDate, StartLocation, EndLocation, TotalCost, PaymentStatus)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'Pending')
-        `;
-        const bookingResult = await db.query(query, [
-            customer.CustomerID, 
-            selectedCar.VehicleID, 
-            selectedCar.DriverID, 
-            tripDate, 
-            bookingDate, 
-            startLocation, 
-            endLocation, 
-            price
-        ]);
+        // Wrap the db.query inside a promise
+        const insertBooking = () => {
+            return new Promise((resolve, reject) => {
+                const query = `
+                    INSERT INTO Booking (CustomerID, VehicleID, DriverID, TripDate, BookingDate, StartLocation, EndLocation, TotalCost, PaymentStatus)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'Pending')
+                `;
+                db.query(query, [
+                    customer.CustomerID, 
+                    selectedCar.VehicleID, 
+                    selectedCar.DriverID, 
+                    tripDate, 
+                    bookingDate, 
+                    startLocation, 
+                    endLocation, 
+                    price
+                ], (err, result) => {
+                    if (err) {
+                        reject(err);
+                    } else {
+                        resolve(result);
+                    }
+                });
+            });
+        };
+
+        const bookingResult = await insertBooking();
 
         // Fetch the newly created booking details
-        const bookingDetailsQuery = `
-            SELECT 
-                b.BookingID, b.TripDate, b.BookingDate, b.StartLocation, b.EndLocation, b.TotalCost, b.PaymentStatus,
-                v.VehicleType, v.LicensePlate, v.Model, 
-                d.FirstName AS DriverFirstName, d.LastName AS DriverLastName, d.Phone AS DriverPhone,
-                c.FirstName AS CustomerFirstName, c.LastName AS CustomerLastName, c.Email AS CustomerEmail, c.Phone AS CustomerPhone
-            FROM Booking b
-            JOIN Vehicle v ON b.VehicleID = v.VehicleID
-            JOIN Driver d ON b.DriverID = d.DriverID
-            JOIN Customer c ON b.CustomerID = c.CustomerID
-            WHERE b.BookingID = ?
-        `;
-        const [bookingDetails] = await db.query(bookingDetailsQuery, [bookingResult.insertId]);
+        const getBookingDetails = () => {
+            return new Promise((resolve, reject) => {
+                const bookingDetailsQuery = `
+                    SELECT 
+                        b.BookingID, b.TripDate, b.BookingDate, b.StartLocation, b.EndLocation, b.TotalCost, b.PaymentStatus,
+                        v.VehicleType, v.LicensePlate, v.Model, 
+                        d.FirstName AS DriverFirstName, d.LastName AS DriverLastName, d.Phone AS DriverPhone,
+                        c.FirstName AS CustomerFirstName, c.LastName AS CustomerLastName, c.Email AS CustomerEmail, c.Phone AS CustomerPhone
+                    FROM Booking b
+                    JOIN Vehicle v ON b.VehicleID = v.VehicleID
+                    JOIN Driver d ON b.DriverID = d.DriverID
+                    JOIN Customer c ON b.CustomerID = c.CustomerID
+                    WHERE b.BookingID = ?
+                `;
+                db.query(bookingDetailsQuery, [bookingResult.insertId], (err, result) => {
+                    if (err) {
+                        reject(err);
+                    } else {
+                        resolve(result[0]);
+                    }
+                });
+            });
+        };
+
+        const bookingDetails = await getBookingDetails();
 
         res.status(200).json({
             success: true,
