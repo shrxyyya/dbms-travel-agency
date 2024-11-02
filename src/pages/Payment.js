@@ -130,7 +130,7 @@ const Payment = () => {
                 <>
                     <button onClick={downloadReceipt}>Download Receipt</button>
                     <button onClick={() => navigate('/home', { state: { customerID: customer.CustomerID } })}>
-                        Go Back to Home
+                        Back to Home
                     </button>
                 </>
             )}

@@ -1,16 +1,6 @@
 CREATE DATABASE travelagency;
 USE travelagency;
 
-CREATE TABLE Agency (
-    AgencyID INT AUTO_INCREMENT PRIMARY KEY,
-    AgencyName VARCHAR(255),
-    Address VARCHAR(255),
-    Phone VARCHAR(15),
-    Email VARCHAR(100),
-    LicenseNumber VARCHAR(50),
-    EstablishedDate DATE
-);
-
 CREATE TABLE Customer (
     CustomerID INT AUTO_INCREMENT PRIMARY KEY,
     FirstName VARCHAR(255),
@@ -18,9 +8,7 @@ CREATE TABLE Customer (
     Email VARCHAR(100),
     Password VARCHAR(255) NOT NULL,
     Phone VARCHAR(15),
-    Address VARCHAR(255),
-    DateOfBirth DATE,
-    Nationality VARCHAR(50)
+    Address VARCHAR(255)
 );
 
 CREATE TABLE Vehicle (
@@ -59,7 +47,6 @@ CREATE TABLE Booking (
     TotalCost DECIMAL(10,2),
     PaymentStatus VARCHAR(20),
     FOREIGN KEY (CustomerID) REFERENCES Customer(CustomerID),
-    FOREIGN KEY (AgencyID) REFERENCES Agency(AgencyID),
     FOREIGN KEY (VehicleID) REFERENCES Vehicle(VehicleID),
     FOREIGN KEY (DriverID) REFERENCES Driver(DriverID)
 );

@@ -167,18 +167,62 @@ app.post('/api/available-cars', (req, res) => {
     });
 });
 
-// Update car availability route
+// Update car and driver availability route
 app.post('/api/update-car-availability', (req, res) => {
     const { carId } = req.body;
 
-    const query = `UPDATE Vehicle SET AvailabilityStatus = 'Unavailable' WHERE VehicleID = ?`;
-    db.query(query, [carId], (err, result) => {
+    // Start a transaction to ensure both updates succeed or fail together
+    db.beginTransaction(err => {
         if (err) {
-            console.error('Error updating car availability:', err);
-            res.status(500).send('Error updating car availability');
-        } else {
-            res.json({ success: true });
+            console.error('Error starting transaction:', err);
+            return res.status(500).send('Error updating availability');
         }
+
+        // First update vehicle status
+        const updateVehicleQuery = `
+            UPDATE Vehicle 
+            SET AvailabilityStatus = 'Unavailable' 
+            WHERE VehicleID = ?
+        `;
+
+        db.query(updateVehicleQuery, [carId], (vehicleErr, vehicleResult) => {
+            if (vehicleErr) {
+                return db.rollback(() => {
+                    console.error('Error updating vehicle availability:', vehicleErr);
+                    res.status(500).send('Error updating vehicle availability');
+                });
+            }
+
+            // Then update driver status for the associated driver
+            const updateDriverQuery = `
+                UPDATE Driver 
+                SET AvailabilityStatus = FALSE 
+                WHERE AssignedVehicleID = ?
+            `;
+
+            db.query(updateDriverQuery, [carId], (driverErr, driverResult) => {
+                if (driverErr) {
+                    return db.rollback(() => {
+                        console.error('Error updating driver availability:', driverErr);
+                        res.status(500).send('Error updating driver availability');
+                    });
+                }
+
+                // If both updates succeed, commit the transaction
+                db.commit(commitErr => {
+                    if (commitErr) {
+                        return db.rollback(() => {
+                            console.error('Error committing transaction:', commitErr);
+                            res.status(500).send('Error updating availability');
+                        });
+                    }
+                    res.json({ 
+                        success: true,
+                        message: 'Vehicle and driver availability updated successfully'
+                    });
+                });
+            });
+        });
     });
 });
 

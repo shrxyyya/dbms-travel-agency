@@ -53,7 +53,7 @@ const AvailableCars = () => {
         <div className="available-cars-container">
             <h1>Available Cars</h1>
             {availableCars.length === 0 ? (
-                <p>Loading available cars...</p>
+                <p>No available cars of the selected type.</p>  // Update here
             ) : (
                 availableCars.map((car) => (
                     <div key={car.VehicleID} className="car-card">
@@ -66,7 +66,7 @@ const AvailableCars = () => {
                 ))
             )}
         </div>
-    );
+    );    
 };
 
 export default AvailableCars;
