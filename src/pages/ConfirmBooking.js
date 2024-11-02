@@ -10,8 +10,7 @@ const ConfirmBooking = () => {
     const navigate = useNavigate();
 
     useEffect(() => {
-        // Log customerID for debugging
-        console.log('Received customerID:', customerID);  
+        console.log('Received customerID:', customerID);
 
         // Fetch customer details when component mounts
         const fetchCustomerDetails = async () => {
@@ -34,7 +33,6 @@ const ConfirmBooking = () => {
         fetchCustomerDetails();
     }, [customerID]);      
 
-    // Early return if any required data is missing
     if (!bookingData || !selectedCar || !customerID || !customer) {
         return <div>Error: Booking data, Car data, or Customer information is missing.</div>;
     }
@@ -54,21 +52,32 @@ const ConfirmBooking = () => {
                 LicensePlate: selectedCar.LicensePlate
             },
             customer,
-            price: bookingData.price  // This ensures the price is included in the payload
+            price: bookingData.price  // Include price in payload
         };
     
         try {
             const response = await axios.post('http://localhost:5000/api/confirm-booking', bookingPayload);
+    
             if (response.data.success) {
-                // Navigate to Payment page and pass all required details
+                const bookingID = response.data.bookingID;
+                
+                // Check if bookingID is received in the response
+                console.log('Received bookingID:', bookingID);
+
+                if (!bookingID) {
+                    console.error('Booking ID is missing from the response');
+                    return;
+                }
+            
                 const bookingDetails = {
-                    ...response.data.vehicleDetails,  // vehicle and driver details
-                    customer,  // Include customer details
+                    bookingID,  // Pass bookingID here
+                    customer,
                     selectedCar,
-                    price: bookingData.price,  // Include the correct total price here
+                    price: bookingData.price,
                     BookingDate: bookingData.bookingDate,
                     TripDate: bookingData.tripDate
                 };
+            
                 navigate('/payment', { state: { bookingDetails } });
             } else {
                 console.error('Booking confirmation failed:', response.data.message);
@@ -76,7 +85,7 @@ const ConfirmBooking = () => {
         } catch (error) {
             console.error('Error confirming booking:', error);
         }
-    };        
+    };            
 
     return (
         <div className="confirm-booking-container">

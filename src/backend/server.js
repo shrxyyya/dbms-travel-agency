@@ -272,12 +272,37 @@ app.post('/api/confirm-booking', async (req, res) => {
     }
 });
 
+app.get('/api/get-booking-status/:bookingID', async (req, res) => {
+    const bookingID = req.params.bookingID;
+
+    try {
+        const query = `
+            SELECT PaymentStatus FROM Booking WHERE BookingID = ?
+        `;
+        db.query(query, [bookingID], (err, result) => {
+            if (err) {
+                console.error('Error fetching booking status:', err);
+                res.status(500).json({ message: 'Server error' });
+            } else if (result.length === 0) {
+                res.status(404).json({ message: 'Booking not found' });
+            } else {
+                res.json({ PaymentStatus: result[0].PaymentStatus });
+            }
+        });
+    } catch (error) {
+        console.error('Server error:', error);
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+
 // New route to process payments
+// Modified route to process payments with logging and error handling
 app.post('/api/process-payment', async (req, res) => {
     const { bookingID, amount, paymentMethod, dues } = req.body;
-    
+
     try {
-        // Begin transaction
+        console.log("Starting payment process for BookingID:", bookingID);
+
         await new Promise((resolve, reject) => {
             db.beginTransaction(err => {
                 if (err) reject(err);
@@ -293,22 +318,34 @@ app.post('/api/process-payment', async (req, res) => {
         
         const paymentResult = await new Promise((resolve, reject) => {
             db.query(insertPaymentQuery, [bookingID, amount, paymentMethod, dues], (err, result) => {
-                if (err) reject(err);
-                else resolve(result);
+                if (err) {
+                    console.error("Error inserting payment:", err);
+                    reject(err);
+                } else {
+                    console.log("Payment inserted successfully:", result.insertId);
+                    resolve(result);
+                }
             });
         });
 
-        // Update booking payment status
+        // Update booking payment status in Booking table
         const updateBookingQuery = `
             UPDATE Booking 
             SET PaymentStatus = 'Completed'
             WHERE BookingID = ?
         `;
-        
+
         await new Promise((resolve, reject) => {
             db.query(updateBookingQuery, [bookingID], (err, result) => {
-                if (err) reject(err);
-                else resolve(result);
+                if (err) {
+                    console.error("Error updating booking payment status:", err);
+                    reject(err);
+                } else if (result.affectedRows === 0) {
+                    console.warn("No Booking found with the provided BookingID:", bookingID);
+                } else {
+                    console.log("Booking payment status updated for BookingID:", bookingID);
+                }
+                resolve(result);
             });
         });
 
@@ -327,12 +364,11 @@ app.post('/api/process-payment', async (req, res) => {
         });
 
     } catch (error) {
-        // Rollback transaction on error
         await new Promise(resolve => {
             db.rollback(() => resolve());
         });
-        
-        console.error('Error processing payment:', error);
+
+        console.error('Error processing payment transaction:', error);
         res.status(500).json({ 
             success: false, 
             message: 'Payment processing failed' 

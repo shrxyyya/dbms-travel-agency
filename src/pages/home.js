@@ -1,8 +1,9 @@
 import React, { useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import '../styles/home.css';
-import sedan from '../assets/sedan.jpeg';
-import suv from '../assets/suv.jpeg';
+import mini from '../assets/mini.jpg';
+import sedan from '../assets/sedan.jpg';
+import suv from '../assets/suv.jpg';
 import CustomerProfile from './CustomerProfile';
 import { ClipboardList } from 'lucide-react'; // Import the bookings icon
 
@@ -20,7 +21,7 @@ const Home = () => {
     }, [customerID]);
 
     const carTypes = [
-        { id: 1, name: 'Mini', description: 'Compact and economical for city travel.', price: '$20/day' },
+        { id: 1, name: 'Mini', description: 'Compact and economical for city travel.', price: '$20/day',image: mini },
         { id: 2, name: 'Sedan', description: 'Comfortable and spacious for longer trips.', price: '$30/day', image: sedan },
         { id: 3, name: 'SUV', description: 'Perfect for family trips with ample space.', price: '$50/day', image: suv }
     ];

@@ -101,4 +101,6 @@ JOIN Driver d ON v.VehicleID = d.AssignedVehicleID
 WHERE v.AvailabilityStatus = 'Available' 
 AND v.VehicleType = 'Sedan';  -- Replace 'Sedan' with an actual value to test
 
-SELECT * FROM Customer WHERE CustomerID = 1;
+-- SELECT * FROM Customer WHERE CustomerID = 1; 
+SELECT * FROM Booking;
+SELECT * FROM Payment;
