@@ -49,11 +49,22 @@ const AvailableCars = () => {
         });
     };
 
+    const handleBackToHome = () => {
+        navigate('/home', {
+            state: { customerID: bookingData.customerID } // Pass the customer ID to the home page
+        });
+    };
+
     return (
         <div className="available-cars-container">
             <h1>Available Cars</h1>
             {availableCars.length === 0 ? (
-                <p>No available cars of the selected type.</p>  // Update here
+                <div>
+                    <p>No available cars of the selected type.</p>
+                    <button onClick={handleBackToHome} className="back-home-button">
+                        Back to Home
+                    </button>
+                </div>
             ) : (
                 availableCars.map((car) => (
                     <div key={car.VehicleID} className="car-card">

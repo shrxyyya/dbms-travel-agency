@@ -30,15 +30,10 @@ const Home = () => {
         navigate('/booking', { state: { carType: car.name, customerID } });
     };
 
-    const handleViewBookings = () => {
-        navigate('/bookings', { state: { customerID } });
-    };
-
     return (
         <div className="home-container">
             {/* Round View Bookings Icon Button */}
-            <button 
-                onClick={handleViewBookings}
+            <button
                 className="view-bookings-icon"
                 style={{
                     position: 'absolute',
