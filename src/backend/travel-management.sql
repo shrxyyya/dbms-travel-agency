@@ -7,8 +7,10 @@ CREATE TABLE Customer (
     LastName VARCHAR(255),
     Email VARCHAR(100),
     Password VARCHAR(255) NOT NULL,
-    Phone VARCHAR(15),
-    Address VARCHAR(255)
+    Phone VARCHAR(10),
+    Address VARCHAR(255),
+    CHECK (Email REGEXP '^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'),
+    CONSTRAINT phone_chk CHECK (length(Phone) = 10)
 );
 
 CREATE TABLE Vehicle (
