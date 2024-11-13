@@ -2,7 +2,6 @@ import React from 'react';
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
 
 import Login from './pages/Login';
-import Dashboard from './pages/Dashboard';
 import Home from './pages/home';
 import Booking from './pages/Booking';
 import ConfirmBooking from './pages/ConfirmBooking';
@@ -15,9 +14,6 @@ function App() {
       <Routes>
         {/* Route for login page */}
         <Route path="/" element={<Login />} />
-        
-        {/* Route for dashboard after login */}
-        <Route path="/dashboard" element={<Dashboard />} />
 
         {/* Route for home page */}
         <Route path="/home" element={<Home />} />

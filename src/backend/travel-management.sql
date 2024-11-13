@@ -91,3 +91,17 @@ AND v.VehicleType = 'Sedan';  -- Replace 'Sedan' with an actual value to test
 -- SELECT * FROM Customer WHERE CustomerID = 1; 
 SELECT * FROM Booking;
 SELECT * FROM Payment;
+
+DELIMITER //
+
+CREATE TRIGGER validate_unique_email 
+BEFORE INSERT ON Customer 
+FOR EACH ROW 
+BEGIN
+    IF EXISTS (SELECT 1 FROM Customer WHERE Email = NEW.Email) THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Duplicate email not allowed';
+    END IF;
+END; //
+
+DELIMITER ;
