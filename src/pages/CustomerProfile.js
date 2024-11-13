@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Edit2, User, X } from 'lucide-react';
+import { Edit2, User, X, LogOut } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import '../styles/customerProfile.css';
 
 const CustomerProfile = ({ customerID }) => {
@@ -7,6 +8,7 @@ const CustomerProfile = ({ customerID }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editedProfile, setEditedProfile] = useState({});
   const [isOpen, setIsOpen] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (customerID && isOpen) {
@@ -70,6 +72,10 @@ const CustomerProfile = ({ customerID }) => {
       [e.target.name]: e.target.value,
     });
   };
+
+  const handleLogout = () => {
+    navigate('/');
+  }
 
   return (
     <>
@@ -154,6 +160,10 @@ const CustomerProfile = ({ customerID }) => {
                       <button className="button delete-button" onClick={handleDelete}>
                         <X size={16} />
                         Delete Account
+                      </button>
+                      <button className="button logout-button" onClick={handleLogout}>
+                        <LogOut size={16} />
+                        Log Out
                       </button>
                     </div>
                   </div>
